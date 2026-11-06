@@ -1,6 +1,8 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import AppMenu from "@/components/AppMenu";
+import DeleteTaskButton from "@/components/DeleteTaskButton";
+import { deleteTask } from "./actions";
 
 const TZ = "Europe/Bucharest";
 
@@ -93,11 +95,18 @@ export default async function UpcomingPage() {
           </h2>
           {items.map((t) => (
             <div key={t.id} className="bg-white rounded-2xl border border-[#E6E4DF] p-4">
-              <div className="font-semibold">{t.title}</div>
-              <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm text-[#5B6670]">
-                {t.available_at && <span>появится в {timeOf(t.available_at)}</span>}
-                <span>до {timeOf(t.due_at)}</span>
-                <span>фото: {t.photos_required}</span>
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <div className="font-semibold">{t.title}</div>
+                  <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm text-[#5B6670]">
+                    {t.available_at && <span>появится в {timeOf(t.available_at)}</span>}
+                    <span>до {timeOf(t.due_at)}</span>
+                    <span>фото: {t.photos_required}</span>
+                  </div>
+                </div>
+                {me.role !== "employee" && (
+                  <DeleteTaskButton id={t.id} title={t.title} action={deleteTask} />
+                )}
               </div>
             </div>
           ))}

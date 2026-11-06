@@ -69,7 +69,7 @@ export default async function TasksPage() {
   const { data: tasksData } = await supabase
     .from("tasks")
     .select("id, title, due_at, available_at, photos_required, status")
-    .neq("status", "done")
+    .not("status", "in", "(done,cancelled)")
     .or(`task_date.lte.${today},task_date.is.null`)
     .order("due_at");
 

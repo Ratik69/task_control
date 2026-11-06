@@ -16,7 +16,7 @@ export async function runCleanup(restaurantId: string) {
       .from("tasks")
       .select("id")
       .eq("restaurant_id", restaurantId)
-      .eq("status", "done")
+      .in("status", ["done", "cancelled"])
       .lt("done_at", cutoff)
       .limit(100);
 
