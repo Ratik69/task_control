@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import { logout } from "@/app/login/actions";
+import AppMenu from "@/components/AppMenu";
 import Link from "next/link";
 
 type Task = {
@@ -183,23 +183,7 @@ export default async function TasksPage() {
           <div className="text-sm text-[#5B6670]">{me?.full_name ?? ""}</div>
           <h1 className="text-2xl font-bold">Задачи смены</h1>
         </div>
-        {me?.role === "employee" ? (
-          <form action={logout}>
-            <button
-              type="submit"
-              className="h-10 px-4 rounded-xl border border-[#CFD4D8] bg-white text-sm font-semibold"
-            >
-              Выйти
-            </button>
-          </form>
-        ) : (
-          <Link
-            href="/"
-            className="h-10 px-4 rounded-xl border border-[#CFD4D8] bg-white text-sm font-semibold flex items-center"
-          >
-            На главную
-          </Link>
-        )}
+        <AppMenu role={me?.role ?? "employee"} />
       </div>
 
       {tasks.length === 0 && (

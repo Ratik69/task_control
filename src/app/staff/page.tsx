@@ -1,8 +1,8 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { createStaff, setStaffActive, resetStaffPassword, deleteStaff } from "./actions";
 import DeleteStaffButton from "./DeleteStaffButton";
+import AppMenu from "@/components/AppMenu";
 
 const roleNames: Record<string, string> = {
   employee: "Сотрудник",
@@ -79,9 +79,7 @@ export default async function StaffPage({
     <main className="min-h-screen bg-[#F6F5F2] text-[#1B1F23] p-4 flex flex-col gap-4">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Сотрудники</h1>
-        <Link href="/" className={`${smallButton} flex items-center`}>
-          На главную
-        </Link>
+        <AppMenu role={me.role} />
       </div>
 
       {keyMissing && (

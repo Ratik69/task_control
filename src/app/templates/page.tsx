@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import AppMenu from "@/components/AppMenu";
 import { removeTemplate } from "./actions";
 
 export default async function TemplatesPage() {
@@ -27,12 +28,7 @@ export default async function TemplatesPage() {
     <main className="min-h-screen bg-[#F6F5F2] text-[#1B1F23] p-4 flex flex-col gap-4">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Шаблоны задач</h1>
-        <Link
-          href="/"
-          className="h-10 px-4 rounded-xl border border-[#CFD4D8] bg-white text-sm font-semibold flex items-center"
-        >
-          На главную
-        </Link>
+        <AppMenu role={profile.role} />
       </div>
 
       {(!templates || templates.length === 0) && (

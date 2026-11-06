@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { runCleanup } from "@/lib/cleanup";
+import AppMenu from "@/components/AppMenu";
 
 const TZ = "Europe/Bucharest";
 const KEEP_DAYS = 14;
@@ -109,9 +110,7 @@ export default async function HistoryPage({
       <main className="min-h-screen bg-[#F6F5F2] text-[#1B1F23] p-4 flex flex-col gap-4">
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold">История по дням</h1>
-          <Link href="/" className={smallButton}>
-            На главную
-          </Link>
+          <AppMenu role={me.role} />
         </div>
 
         <p className="text-sm text-[#5B6670]">Хранится 14 дней, потом удаляется.</p>
@@ -192,9 +191,12 @@ export default async function HistoryPage({
         <h1 className="text-xl font-bold capitalize">
           {selected === today ? "Сегодня" : longDate(selected)}
         </h1>
-        <Link href="/history" className={smallButton}>
-          К дням
-        </Link>
+        <div className="flex items-center gap-2">
+          <Link href="/history" className={smallButton}>
+            К дням
+          </Link>
+          <AppMenu role={me.role} />
+        </div>
       </div>
 
       {list.length === 0 && (

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { logout } from "@/app/login/actions";
+import AppMenu from "@/components/AppMenu";
 import { runCleanup } from "@/lib/cleanup";
 
 const roleNames: Record<string, string> = {
@@ -58,16 +58,10 @@ export default async function Home() {
 
   return (
     <main className="min-h-screen bg-[#F6F5F2] text-[#1B1F23] p-6 flex flex-col gap-4">
-      <form action={logout}>
-        <button
-          type="submit"
-          className="h-10 px-4 rounded-xl border border-[#CFD4D8] bg-white text-sm font-semibold"
-        >
-          Выйти
-        </button>
-      </form>
-
-      <h1 className="text-2xl font-bold">Restaurant Task Control</h1>
+      <div className="flex items-start justify-between gap-3">
+        <h1 className="text-2xl font-bold">Restaurant Task Control</h1>
+        <AppMenu role={profile?.role ?? "manager"} />
+      </div>
 
       {profile ? (
         <p className="text-lg">
