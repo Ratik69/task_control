@@ -1,7 +1,8 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  // Разрешаем открывать сайт с телефона по адресу в локальной сети (только для разработки)
+  allowedDevOrigins: ["10.*.*.*", "192.168.*.*", "172.*.*.*"],
   turbopack: {
     rules: {
       "*.css": {
