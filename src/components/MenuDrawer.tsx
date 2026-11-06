@@ -10,8 +10,6 @@ type Props = {
 
 const managerLinks = [
   { href: "/", label: "Главная" },
-  { href: "/tasks", label: "Задачи смены" },
-  { href: "/templates", label: "Шаблоны задач" },
   { href: "/history", label: "История по дням" },
   { href: "/staff", label: "Сотрудники" },
 ];

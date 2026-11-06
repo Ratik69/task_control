@@ -93,14 +93,8 @@ export default async function Home() {
         <Link href="/tasks" className={linkClass}>
           Задачи смены
         </Link>
-        <Link href="/templates" className={linkClass}>
-          Шаблоны задач
-        </Link>
-        <Link href="/history" className={linkClass}>
-          История по дням
-        </Link>
-        <Link href="/staff" className={linkClass}>
-          Сотрудники
+        <Link href="/templates/new" className={linkClass}>
+          Добавить новую задачу
         </Link>
       </nav>
     </main>
