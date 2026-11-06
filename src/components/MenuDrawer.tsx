@@ -8,15 +8,23 @@ type Props = {
   logoutAction: () => void | Promise<void>;
 };
 
-const managerLinks = [
-  { href: "/", label: "Главная" },
+const allLinks = [
+  { href: "/tasks", label: "Главная" },
+  { href: "/upcoming", label: "Предстоящие задачи" },
   { href: "/history", label: "История по дням" },
   { href: "/staff", label: "Сотрудники" },
 ];
 
+// Сотруднику: главная и предстоящие. Менеджеру ещё история. Управляющему и администратору ещё сотрудники.
+const linksByRole: Record<string, string[]> = {
+  employee: ["/tasks", "/upcoming"],
+  lead: ["/tasks", "/upcoming", "/history"],
+};
+
 export default function MenuDrawer({ role, logoutAction }: Props) {
   const [open, setOpen] = useState(false);
-  const links = role === "employee" ? [] : managerLinks;
+  const allowed = linksByRole[role];
+  const links = allowed ? allLinks.filter((l) => allowed.includes(l.href)) : allLinks;
 
   return (
     <>

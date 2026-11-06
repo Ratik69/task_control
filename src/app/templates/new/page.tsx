@@ -32,7 +32,7 @@ export default async function NewTemplatePage({
     .eq("id", user?.id ?? "")
     .maybeSingle();
 
-  if (!profile || !["manager", "admin"].includes(profile.role)) redirect("/");
+  if (!profile || !["lead", "manager", "admin"].includes(profile.role)) redirect("/");
 
   const { data: categories } = await supabase
     .from("categories")

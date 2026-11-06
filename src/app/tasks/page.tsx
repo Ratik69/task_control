@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import AppMenu from "@/components/AppMenu";
+import { runCleanup } from "@/lib/cleanup";
 import Link from "next/link";
 
 type Task = {
@@ -50,9 +51,12 @@ export default async function TasksPage() {
 
   const { data: me } = await supabase
     .from("profiles")
-    .select("full_name, role")
+    .select("full_name, role, restaurant_id")
     .eq("id", user?.id ?? "")
     .maybeSingle();
+
+  // У тех, кто добавляет задачи, заодно удаляем всё старше 14 дней
+  if (me && me.role !== "employee" && me.restaurant_id) await runCleanup(me.restaurant_id);
 
   // Создаём на сегодня задачи по шаблонам (дублей не будет)
   await supabase.rpc("ensure_tasks_for_today");
@@ -69,7 +73,7 @@ export default async function TasksPage() {
     .or(`task_date.lte.${today},task_date.is.null`)
     .order("due_at");
 
-  // Сотрудники видят задачу только после времени «Появится в», управляющая видит все
+  // Сотрудники видят задачу только после времени «Появится в», управляющий видит все
   const nowMs = Date.now();
   const tasks: Task[] = ((tasksData ?? []) as Task[]).filter(
     (t) => me?.role !== "employee" || !t.available_at || new Date(t.available_at).getTime() <= nowMs,
@@ -177,7 +181,7 @@ export default async function TasksPage() {
   }
 
   return (
-    <main className="min-h-screen bg-[#F6F5F2] text-[#1B1F23] p-4 flex flex-col gap-1">
+    <main className="min-h-screen bg-[#F6F5F2] text-[#1B1F23] p-4 pb-28 flex flex-col gap-1">
         <div className="flex items-start justify-between gap-3">
         <div>
           <div className="text-sm text-[#5B6670]">{me?.full_name ?? ""}</div>
@@ -186,6 +190,38 @@ export default async function TasksPage() {
         <AppMenu role={me?.role ?? "employee"} />
       </div>
 
+      {me && me.role !== "employee" && (
+        <div className="mt-3 grid grid-cols-2 gap-2">
+          {[
+            { label: "На проверке", value: pending.length },
+            { label: "К выполнению", value: todo.length },
+            { label: "Переделать", value: rejected.length },
+            {
+              label: "Просрочено",
+              value: tasks.filter(
+                (t) =>
+                  (t.status === "todo" || t.status === "rejected") &&
+                  new Date(t.due_at) < now,
+              ).length,
+            },
+          ].map((x) => (
+            <div
+              key={x.label}
+              className="bg-white rounded-2xl border border-[#E6E4DF] p-3 flex flex-col"
+            >
+              <span
+                className={`text-3xl font-bold ${
+                  x.value > 0 && x.label !== "К выполнению" ? "text-[#B4281A]" : "text-[#1B1F23]"
+                }`}
+              >
+                {x.value}
+              </span>
+              <span className="text-sm text-[#5B6670]">{x.label}</span>
+            </div>
+          ))}
+        </div>
+      )}
+
       {tasks.length === 0 && (
         <p className="mt-4 text-[#5B6670]">Все задачи выполнены. Новых нет.</p>
       )}
@@ -193,6 +229,16 @@ export default async function TasksPage() {
       <Section title="Нужно переделать" items={rejected} />
       <Section title="К выполнению" items={todo} />
       <Section title="На проверке" items={pending} />
+
+      {me && me.role !== "employee" && (
+        <Link
+          href="/templates/new"
+          aria-label="Добавить новую задачу"
+          className="fixed bottom-6 left-1/2 z-40 flex h-14 w-14 -translate-x-1/2 items-center justify-center rounded-full bg-[#1F6F5C] text-4xl font-light leading-none text-white shadow-lg"
+        >
+          +
+        </Link>
+      )}
     </main>
   );
 }

@@ -17,7 +17,7 @@ async function getManager() {
     .eq("id", user.id)
     .maybeSingle();
 
-  if (!profile || !["manager", "admin"].includes(profile.role)) redirect("/");
+  if (!profile || !["lead", "manager", "admin"].includes(profile.role)) redirect("/");
   return { supabase, user, profile };
 }
 

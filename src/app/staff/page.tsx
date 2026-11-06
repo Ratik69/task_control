@@ -6,7 +6,8 @@ import AppMenu from "@/components/AppMenu";
 
 const roleNames: Record<string, string> = {
   employee: "Сотрудник",
-  manager: "Управляющая",
+  lead: "Менеджер",
+  manager: "Управляющий",
   admin: "Администратор",
 };
 
@@ -104,7 +105,9 @@ export default async function StaffPage({
       <section className="flex flex-col gap-2">
         {people?.map((p) => {
           const isSelf = p.id === user?.id;
-          const manageable = !isSelf && (me.role === "admin" || p.role === "employee");
+          const manageable =
+            !isSelf &&
+            (me.role === "admin" || p.role === "employee" || p.role === "lead");
 
           return (
             <div
@@ -208,15 +211,14 @@ export default async function StaffPage({
             />
           </label>
 
-          {me.role === "admin" && (
-            <label className={label}>
-              Роль
-              <select name="role" defaultValue="employee" className={field}>
-                <option value="employee">Сотрудник</option>
-                <option value="manager">Управляющая</option>
-              </select>
-            </label>
-          )}
+          <label className={label}>
+            Должность
+            <select name="role" defaultValue="employee" className={field}>
+              <option value="employee">Сотрудник</option>
+              <option value="lead">Менеджер</option>
+              {me.role === "admin" && <option value="manager">Управляющий</option>}
+            </select>
+          </label>
 
           <button
             type="submit"

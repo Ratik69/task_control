@@ -76,7 +76,7 @@ export default async function HistoryPage({
     .eq("id", user?.id ?? "")
     .maybeSingle();
 
-  if (!me || !["manager", "admin"].includes(me.role)) redirect("/");
+  if (!me || !["lead", "manager", "admin"].includes(me.role)) redirect("/");
 
   await runCleanup(me.restaurant_id);
 

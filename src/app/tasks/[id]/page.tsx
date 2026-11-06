@@ -114,7 +114,7 @@ export default async function TaskPage({
   const canSubmit = task.status === "todo" || task.status === "rejected";
   const lastRejected = attemptList.find((a) => a.review_status === "rejected");
   const pendingAttempt = attemptList.find((a) => a.review_status === "pending");
-  const isReviewer = me.role === "manager" || me.role === "admin";
+  const isReviewer = me.role === "lead" || me.role === "manager" || me.role === "admin";
 
   return (
     <main className="min-h-screen bg-[#F6F5F2] text-[#1B1F23] p-4 flex flex-col gap-4">
@@ -156,7 +156,7 @@ export default async function TaskPage({
 
       {task.status === "pending_review" && (
         <p className="rounded-xl bg-[#FFF1CC] text-[#7A5200] text-sm p-3">
-          Работа отправлена и ждёт проверки управляющей.
+          Работа отправлена и ждёт проверки управляющего.
         </p>
       )}
 
@@ -165,7 +165,7 @@ export default async function TaskPage({
         pendingAttempt &&
         (pendingAttempt.submitted_by === user?.id ? (
           <p className="rounded-xl bg-white border border-[#E6E4DF] text-sm p-3">
-            Это ваша работа. Её должна проверить другая управляющая или администратор.
+            Это ваша работа. Её должен проверить другой управляющий или администратор.
           </p>
         ) : (
           <form

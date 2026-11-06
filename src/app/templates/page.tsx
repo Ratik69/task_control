@@ -16,7 +16,7 @@ export default async function TemplatesPage() {
     .eq("id", user?.id ?? "")
     .maybeSingle();
 
-  if (!profile || !["manager", "admin"].includes(profile.role)) redirect("/");
+  if (!profile || !["lead", "manager", "admin"].includes(profile.role)) redirect("/");
 
   const { data: templates } = await supabase
     .from("task_templates")

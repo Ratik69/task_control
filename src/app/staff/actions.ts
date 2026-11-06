@@ -7,7 +7,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 
 const UUID = /^[0-9a-f-]{36}$/i;
 
-// Кто вызывает действие: должен быть управляющей или администратором
+// Кто вызывает действие: должен быть управляющим или администратором
 async function getCaller() {
   const supabase = await createClient();
   const {
@@ -30,9 +30,13 @@ function requireKey() {
   if (!process.env.SUPABASE_SERVICE_ROLE_KEY) redirect("/staff?error=nokey");
 }
 
-// Администратор управляет всеми, управляющая только сотрудниками
+// Администратор управляет всеми, управляющий только сотрудниками
+// Управляющий: сотрудниками и менеджерами. Менеджер раздел «Сотрудники» не видит.
 function canManage(callerRole: string, targetRole: string) {
-  return callerRole === "admin" || targetRole === "employee";
+  return (
+    callerRole === "admin" ||
+    (callerRole === "manager" && (targetRole === "employee" || targetRole === "lead"))
+  );
 }
 
 export async function createStaff(formData: FormData) {
@@ -48,8 +52,9 @@ export async function createStaff(formData: FormData) {
   if (!/^[a-z0-9._-]{2,32}$/.test(username)) redirect("/staff?error=username");
   if (password.length < 6 || password.length > 72) redirect("/staff?error=password");
 
-  // Только администратор может создавать управляющих
-  if (me.role !== "admin" || (role !== "employee" && role !== "manager")) {
+  // Управляющих создаёт только администратор, менеджеров ещё и управляющий
+  const allowed = me.role === "admin" ? ["employee", "lead", "manager"] : ["employee", "lead"];
+  if (!allowed.includes(role)) {
     role = "employee";
   }
 

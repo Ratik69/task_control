@@ -3,7 +3,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 const KEEP_DAYS = 14;
 
 // Удаляет всё, что старше 14 дней: принятые задачи с фото, историю и удалённых сотрудников.
-// Вызывается сама, когда управляющая открывает главную или историю. Ошибки не показываются.
+// Вызывается сама, когда управляющий открывает главную или историю. Ошибки не показываются.
 export async function runCleanup(restaurantId: string) {
   if (!process.env.SUPABASE_SERVICE_ROLE_KEY) return;
 
