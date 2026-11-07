@@ -3,6 +3,8 @@ import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import SubmitForm from "./SubmitForm";
 import { reviewAttempt } from "./actions";
+import ReviewButtons from "./ReviewButtons";
+import { signPhotoUrls } from "@/lib/photos";
 
 function timeOf(iso: string) {
   return new Date(iso).toLocaleTimeString("ru-RU", {
@@ -58,54 +60,41 @@ export default async function TaskPage({
     data: { user },
   } = await supabase.auth.getUser();
 
-  const { data: me } = await supabase
-    .from("profiles")
-    .select("restaurant_id, role")
-    .eq("id", user?.id ?? "")
-    .maybeSingle();
+  // Все четыре запроса идут одновременно, фото приходят вместе с попытками
+  const [{ data: me }, { data: task }, { data: attempts }, { data: people }] = await Promise.all([
+    supabase
+      .from("profiles")
+      .select("restaurant_id, role")
+      .eq("id", user?.id ?? "")
+      .maybeSingle(),
+    supabase
+      .from("tasks")
+      .select("id, title, description, due_at, photos_required, status")
+      .eq("id", id)
+      .maybeSingle(),
+    supabase
+      .from("task_attempts")
+      .select(
+        "id, submitted_by, submitted_at, comment, review_status, review_comment, attempt_photos(storage_path)"
+      )
+      .eq("task_id", id)
+      .order("submitted_at", { ascending: false }),
+    supabase.from("profiles").select("id, full_name"),
+  ]);
 
-  if (!me) notFound();
-
-  const { data: task } = await supabase
-    .from("tasks")
-    .select("id, title, description, due_at, photos_required, status")
-    .eq("id", id)
-    .maybeSingle();
-
-  if (!task) notFound();
-
-  const { data: attempts } = await supabase
-    .from("task_attempts")
-    .select("id, submitted_by, submitted_at, comment, review_status, review_comment")
-    .eq("task_id", id)
-    .order("submitted_at", { ascending: false });
+  if (!me || !task) notFound();
 
   const attemptList = attempts ?? [];
-
-  const { data: photos } = await supabase
-    .from("attempt_photos")
-    .select("attempt_id, storage_path")
-    .in(
-      "attempt_id",
-      attemptList.map((a) => a.id)
-    );
-
-  const photoList = photos ?? [];
-  const urlByPath = new Map<string, string>();
-
-  if (photoList.length > 0) {
-    const { data: signed } = await supabase.storage
-      .from("task-photos")
-      .createSignedUrls(
-        photoList.map((p) => p.storage_path),
-        3600
-      );
-    signed?.forEach((s) => {
-      if (s.path && s.signedUrl) urlByPath.set(s.path, s.signedUrl);
-    });
-  }
-
-  const { data: people } = await supabase.from("profiles").select("id, full_name");
+  const photoList = attemptList.flatMap((a) =>
+    (a.attempt_photos ?? []).map((p: { storage_path: string }) => ({
+      attempt_id: a.id,
+      storage_path: p.storage_path,
+    }))
+  );
+  const urlByPath = await signPhotoUrls(
+    supabase,
+    photoList.map((p) => p.storage_path)
+  );
   const names = new Map<string, string>(
     (people ?? []).map((p) => [p.id as string, p.full_name as string])
   );
@@ -196,24 +185,7 @@ export default async function TaskPage({
               />
             </label>
 
-            <div className="grid grid-cols-2 gap-3">
-              <button
-                type="submit"
-                name="decision"
-                value="reject"
-                className="h-12 rounded-xl border-[1.5px] border-[#B4281A] bg-white text-[#9A2A1A] text-base font-semibold"
-              >
-                Отклонить
-              </button>
-              <button
-                type="submit"
-                name="decision"
-                value="accept"
-                className="h-12 rounded-xl bg-[#1F6F5C] text-white text-base font-semibold"
-              >
-                Принять
-              </button>
-            </div>
+            <ReviewButtons />
           </form>
         ))}
 
@@ -245,13 +217,16 @@ export default async function TaskPage({
                   .map((p) => {
                     const url = urlByPath.get(p.storage_path);
                     return url ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        key={p.storage_path}
-                        src={url}
-                        alt="Фото результата"
-                        className="aspect-square w-full rounded-xl object-cover bg-[#DDE1E4]"
-                      />
+                      <a key={p.storage_path} href={url.full} target="_blank" rel="noreferrer">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={url.thumb}
+                          loading="lazy"
+                          decoding="async"
+                          alt="Фото результата"
+                          className="aspect-square w-full rounded-xl object-cover bg-[#DDE1E4]"
+                        />
+                      </a>
                     ) : null;
                   })}
               </div>

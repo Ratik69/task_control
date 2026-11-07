@@ -12,23 +12,26 @@ type Props = {
 
 type Item = { file: File; url: string };
 
-// Уменьшаем фото до 1600 px по длинной стороне, чтобы оно весило мало
-async function compress(file: File): Promise<Blob> {
+// Уменьшаем фото до 1600 px и делаем маленькую копию 400 px для списков
+async function render(bitmap: ImageBitmap, maxSide: number, quality: number): Promise<Blob | null> {
+  const scale = Math.min(1, maxSide / Math.max(bitmap.width, bitmap.height));
+  const canvas = document.createElement("canvas");
+  canvas.width = Math.round(bitmap.width * scale);
+  canvas.height = Math.round(bitmap.height * scale);
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return null;
+  ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+  return new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/jpeg", quality));
+}
+
+async function compress(file: File): Promise<{ full: Blob; thumb: Blob | null }> {
   try {
     const bitmap = await createImageBitmap(file);
-    const scale = Math.min(1, 1600 / Math.max(bitmap.width, bitmap.height));
-    const canvas = document.createElement("canvas");
-    canvas.width = Math.round(bitmap.width * scale);
-    canvas.height = Math.round(bitmap.height * scale);
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return file;
-    ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
-    const blob = await new Promise<Blob | null>((resolve) =>
-      canvas.toBlob(resolve, "image/jpeg", 0.8)
-    );
-    return blob ?? file;
+    const full = (await render(bitmap, 1600, 0.8)) ?? file;
+    const thumb = await render(bitmap, 400, 0.7);
+    return { full, thumb };
   } catch {
-    return file;
+    return { full: file, thumb: null };
   }
 }
 
@@ -70,10 +73,9 @@ export default function SubmitForm({ taskId, restaurantId, photosRequired }: Pro
     setBusy(true);
     try {
       const supabase = createClient();
-      const uploaded: { path: string; mime: string; size: number }[] = [];
-
-      for (const item of items) {
-        const blob = await compress(item.file);
+      // Все фото сжимаются и загружаются одновременно
+      const uploaded = await Promise.all(items.map(async (item) => {
+        const { full: blob, thumb } = await compress(item.file);
         const mime = blob.type || item.file.type;
         const ext =
           mime === "image/png"
@@ -85,13 +87,22 @@ export default function SubmitForm({ taskId, restaurantId, photosRequired }: Pro
                 : "jpg";
         const path = `${restaurantId}/${taskId}/${randomName()}.${ext}`;
 
+        const thumbUpload = thumb
+          ? supabase.storage
+              .from("task-photos")
+              .upload(path.replace(/\.[^./]+$/, "") + "_t.jpg", thumb, {
+                contentType: "image/jpeg",
+              })
+          : Promise.resolve(null);
+
         const { error: uploadError } = await supabase.storage
           .from("task-photos")
           .upload(path, blob, { contentType: mime });
 
+        await thumbUpload; // не получилось с миниатюрой, не страшно: покажется полное фото
         if (uploadError) throw new Error("Не удалось загрузить фото. Попробуйте ещё раз.");
-        uploaded.push({ path, mime, size: blob.size });
-      }
+        return { path, mime, size: blob.size };
+      }));
 
       const { error: rpcError } = await supabase.rpc("submit_attempt", {
         p_task_id: taskId,

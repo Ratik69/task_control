@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { after } from "next/server";
 import AppMenu from "@/components/AppMenu";
 import { runCleanup } from "@/lib/cleanup";
 import Link from "next/link";
@@ -49,17 +50,19 @@ export default async function TasksPage() {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const { data: me } = await supabase
-    .from("profiles")
-    .select("full_name, role, restaurant_id")
-    .eq("id", user?.id ?? "")
-    .maybeSingle();
+  // Профиль и создание сегодняшних задач по шаблонам (дублей не будет) идут одновременно
+  const [{ data: me }] = await Promise.all([
+    supabase
+      .from("profiles")
+      .select("full_name, role, restaurant_id")
+      .eq("id", user?.id ?? "")
+      .maybeSingle(),
+    supabase.rpc("ensure_tasks_for_today"),
+  ]);
 
-  // У тех, кто добавляет задачи, заодно удаляем всё старше 14 дней
-  if (me && me.role !== "employee" && me.restaurant_id) await runCleanup(me.restaurant_id);
-
-  // Создаём на сегодня задачи по шаблонам (дублей не будет)
-  await supabase.rpc("ensure_tasks_for_today");
+  // У тех, кто добавляет задачи, заодно удаляем всё старше 14 дней, уже после ответа
+  const restaurantId = me?.restaurant_id;
+  if (me && me.role !== "employee" && restaurantId) after(() => runCleanup(restaurantId));
 
   // Задачи на будущие дни не показываем, пока их день не наступил
   const today = new Date().toLocaleDateString("sv-SE", {
@@ -79,20 +82,19 @@ export default async function TasksPage() {
     (t) => me?.role !== "employee" || !t.available_at || new Date(t.available_at).getTime() <= nowMs,
   );
 
-  const { data: attemptsData } = await supabase
-    .from("task_attempts")
-    .select("task_id, submitted_by, submitted_at, review_status, review_comment")
-    .in(
-      "task_id",
-      tasks.map((t) => t.id)
-    )
-    .order("submitted_at", { ascending: false });
+  const [{ data: attemptsData }, { data: peopleData }] = await Promise.all([
+    supabase
+      .from("task_attempts")
+      .select("task_id, submitted_by, submitted_at, review_status, review_comment")
+      .in(
+        "task_id",
+        tasks.map((t) => t.id)
+      )
+      .order("submitted_at", { ascending: false }),
+    supabase.from("profiles").select("id, full_name"),
+  ]);
 
   const attempts: Attempt[] = attemptsData ?? [];
-
-  const { data: peopleData } = await supabase
-    .from("profiles")
-    .select("id, full_name");
 
   const names = new Map<string, string>(
     (peopleData ?? []).map((p) => [p.id as string, p.full_name as string])

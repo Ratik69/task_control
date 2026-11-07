@@ -1,7 +1,9 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { after } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { runCleanup } from "@/lib/cleanup";
+import { signPhotoUrls } from "@/lib/photos";
 import AppMenu from "@/components/AppMenu";
 
 const TZ = "Europe/Bucharest";
@@ -78,7 +80,7 @@ export default async function HistoryPage({
 
   if (!me || !["lead", "manager", "admin"].includes(me.role)) redirect("/");
 
-  await runCleanup(me.restaurant_id);
+  after(() => runCleanup(me.restaurant_id));
 
   // Последние 14 дней, сегодня первым
   const today = dayOf(new Date());
@@ -172,18 +174,10 @@ export default async function HistoryPage({
   const titleOf = new Map((tasks ?? []).map((t) => [t.id, t.title]));
   const nameOf = new Map((people ?? []).map((p) => [p.id, p.full_name]));
 
-  const urlOf = new Map<string, string>();
-  if (photos && photos.length > 0) {
-    const { data: signed } = await supabase.storage
-      .from("task-photos")
-      .createSignedUrls(
-        photos.map((p) => p.storage_path),
-        3600,
-      );
-    for (const s of signed ?? []) {
-      if (s.path && s.signedUrl) urlOf.set(s.path, s.signedUrl);
-    }
-  }
+  const urlOf = await signPhotoUrls(
+    supabase,
+    (photos ?? []).map((p) => p.storage_path),
+  );
 
   return (
     <main className="min-h-screen bg-[#F6F5F2] text-[#1B1F23] p-4 flex flex-col gap-4">
@@ -239,10 +233,12 @@ export default async function HistoryPage({
                   {pics.map((p) => {
                     const url = urlOf.get(p.storage_path);
                     return url ? (
-                      <a key={p.storage_path} href={url} target="_blank" rel="noreferrer">
+                      <a key={p.storage_path} href={url.full} target="_blank" rel="noreferrer">
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img
-                          src={url}
+                          src={url.thumb}
+                          loading="lazy"
+                          decoding="async"
                           alt=""
                           className="aspect-square w-full rounded-lg object-cover"
                         />

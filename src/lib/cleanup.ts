@@ -1,4 +1,5 @@
 import { createAdminClient } from "@/lib/supabase/admin";
+import { thumbPath } from "@/lib/photos";
 
 const KEEP_DAYS = 14;
 
@@ -35,7 +36,7 @@ export async function runCleanup(restaurantId: string) {
           .select("storage_path")
           .in("attempt_id", attemptIds);
 
-        const paths = (photos ?? []).map((p) => p.storage_path);
+        const paths = (photos ?? []).flatMap((p) => [p.storage_path, thumbPath(p.storage_path)]);
         if (paths.length > 0) {
           const { error: storageError } = await admin.storage.from("task-photos").remove(paths);
           if (storageError) return; // файлы не удалились, записи не трогаем, попробуем позже
@@ -64,7 +65,7 @@ export async function runCleanup(restaurantId: string) {
         .from("attempt_photos")
         .select("storage_path")
         .in("attempt_id", rejectedIds);
-      const paths = (photos ?? []).map((p) => p.storage_path);
+      const paths = (photos ?? []).flatMap((p) => [p.storage_path, thumbPath(p.storage_path)]);
       if (paths.length > 0) {
         const { error: storageError } = await admin.storage.from("task-photos").remove(paths);
         if (storageError) return;
