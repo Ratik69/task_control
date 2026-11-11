@@ -1,4 +1,5 @@
 import { login } from "./actions";
+import SubmitButton from "@/components/SubmitButton";
 
 export default async function LoginPage({
   searchParams,
@@ -44,12 +45,12 @@ export default async function LoginPage({
           />
         </label>
 
-        <button
-          type="submit"
+        <SubmitButton
+          pendingText="Входим…"
           className="h-12 rounded-xl bg-[#1F6F5C] text-white text-base font-semibold"
         >
           Войти
-        </button>
+        </SubmitButton>
       </form>
     </main>
   );

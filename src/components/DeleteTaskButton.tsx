@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef } from "react";
+import SubmitButton from "@/components/SubmitButton";
 
 type Props = {
   id: string;
@@ -41,12 +42,12 @@ export default function DeleteTaskButton({ id, title, action }: Props) {
 
           <form action={action}>
             <input type="hidden" name="id" value={id} />
-            <button
-              type="submit"
+            <SubmitButton
+              pendingText="Удаляем…"
               className="h-12 w-full rounded-xl bg-[#B4281A] text-base font-semibold text-white"
             >
               Удалить
-            </button>
+            </SubmitButton>
           </form>
         </div>
       </dialog>

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import AppMenu from "@/components/AppMenu";
+import SubmitButton from "@/components/SubmitButton";
 import { removeTemplate } from "./actions";
 
 export default async function TemplatesPage() {
@@ -55,12 +56,12 @@ export default async function TemplatesPage() {
             </div>
             <form action={removeTemplate}>
               <input type="hidden" name="id" value={t.id} />
-              <button
-                type="submit"
+              <SubmitButton
+                pendingText="Убираем…"
                 className="h-10 px-3 rounded-lg border border-[#CFD4D8] text-sm"
               >
                 Убрать
-              </button>
+              </SubmitButton>
             </form>
           </div>
         ))}

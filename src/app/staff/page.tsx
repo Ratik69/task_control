@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createStaff, setStaffActive, resetStaffPassword, deleteStaff } from "./actions";
 import DeleteStaffButton from "./DeleteStaffButton";
 import AppMenu from "@/components/AppMenu";
+import SubmitButton from "@/components/SubmitButton";
 
 const roleNames: Record<string, string> = {
   employee: "Сотрудник",
@@ -143,9 +144,9 @@ export default async function StaffPage({
                     <form action={setStaffActive}>
                       <input type="hidden" name="id" value={p.id} />
                       <input type="hidden" name="active" value={p.is_active ? "false" : "true"} />
-                      <button type="submit" className={smallButton}>
+                      <SubmitButton pendingText="Сохраняем…" className={smallButton}>
                         {p.is_active ? "Отключить" : "Включить"}
-                      </button>
+                      </SubmitButton>
                     </form>
                     <DeleteStaffButton id={p.id} name={p.full_name} action={deleteStaff} />
                   </div>
@@ -165,9 +166,9 @@ export default async function StaffPage({
                         minLength={6}
                         className={`${field} flex-1 min-w-0`}
                       />
-                      <button type="submit" className={smallButton}>
+                      <SubmitButton pendingText="Сохраняем…" className={smallButton}>
                         Сохранить
-                      </button>
+                      </SubmitButton>
                     </form>
                   </details>
                 </div>
@@ -220,12 +221,12 @@ export default async function StaffPage({
             </select>
           </label>
 
-          <button
-            type="submit"
+          <SubmitButton
+            pendingText="Добавляем…"
             className="h-12 rounded-xl bg-[#1F6F5C] text-white text-base font-semibold"
           >
             Добавить
-          </button>
+          </SubmitButton>
         </form>
       </section>
     </main>

@@ -42,6 +42,7 @@ function randomName() {
 export default function SubmitForm({ taskId, restaurantId, photosRequired }: Props) {
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
+  const submittingRef = useRef(false);
   const [items, setItems] = useState<Item[]>([]);
   const [comment, setComment] = useState("");
   const [busy, setBusy] = useState(false);
@@ -63,6 +64,8 @@ export default function SubmitForm({ taskId, restaurantId, photosRequired }: Pro
   }
 
   async function submit() {
+    // Мгновенная защита от двойного тапа: state обновляется не сразу
+    if (submittingRef.current) return;
     setError(null);
 
     if (items.length < photosRequired) {
@@ -70,6 +73,7 @@ export default function SubmitForm({ taskId, restaurantId, photosRequired }: Pro
       return;
     }
 
+    submittingRef.current = true;
     setBusy(true);
     try {
       const supabase = createClient();
@@ -116,6 +120,7 @@ export default function SubmitForm({ taskId, restaurantId, photosRequired }: Pro
       router.refresh();
     } catch (e) {
       setError(e instanceof Error ? e.message : "Ошибка отправки");
+      submittingRef.current = false;
       setBusy(false);
     }
   }

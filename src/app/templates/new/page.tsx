@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { createTemplate } from "../actions";
 import RepeatFields from "./RepeatFields";
+import SubmitButton from "@/components/SubmitButton";
 
 const errors: Record<string, string> = {
   title: "Введите название задачи",
@@ -120,12 +121,9 @@ export default async function NewTemplatePage({
 
         <RepeatFields />
 
-        <button
-          type="submit"
-          className="h-12 rounded-xl bg-[#1F6F5C] text-white text-base font-semibold"
-        >
+        <SubmitButton className="h-12 rounded-xl bg-[#1F6F5C] text-white text-base font-semibold">
           Сохранить задачу
-        </button>
+        </SubmitButton>
       </form>
     </main>
   );

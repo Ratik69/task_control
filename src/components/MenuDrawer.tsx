@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import SubmitButton from "@/components/SubmitButton";
 
 type Props = {
   role: string;
@@ -75,12 +76,12 @@ export default function MenuDrawer({ role, logoutAction }: Props) {
             </nav>
 
             <form action={logoutAction} className="mt-auto pt-4">
-              <button
-                type="submit"
+              <SubmitButton
+                pendingText="Выходим…"
                 className="h-12 w-full rounded-xl border border-[#CFD4D8] bg-white text-base font-semibold"
               >
                 Выйти
-              </button>
+              </SubmitButton>
             </form>
           </aside>
         </div>
